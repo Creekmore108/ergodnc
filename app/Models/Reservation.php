@@ -20,7 +20,7 @@ class Reservation extends Model
         'status' => 'integer',
         'start_date' => 'immutable_date',
         'end_date' => 'immutable_date',
-    ]
+    ];
 
     public function user(): BelongsTo
     {

@@ -12,4 +12,10 @@ class Tag extends Model
     protected $guarded = [];
 
     public $timestamps = false;
+
+    public function offices(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+
+        return $this->belongsToMany(Office::class, 'office_tags');
+    }
 }

@@ -30,9 +30,9 @@ return new class extends Migration
 
         Schema::create('office_tags', function(Blueprint $table){
             $table->foreignId('office_id')->index();
-            $table->foreignId('tage_id')->index();
+            $table->foreignId('tag_id')->index();
 
-            $table->unique(['office_id', 'tage_id']);
+            $table->unique(['office_id', 'tag_id']);
         });
     }
 

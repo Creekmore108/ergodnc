@@ -2,6 +2,9 @@
 
 namespace Database\Factories;
 
+use App\Models\Office;
+use App\Models\Reservation;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -10,7 +13,7 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 class ReservationFactory extends Factory
 {
 
-    proctected $model = Reservation::class;
+    protected $model = Reservation::class;
     /**
      * Define the model's default state.
      *
@@ -26,5 +29,11 @@ class ReservationFactory extends Factory
             'start_date' => now()->addDay(1)->format('Y-m-d'),
             'end_date' => now()->addDay(5)->format('Y-m-d'),
         ];
+    }
+    public function cancelled(): Factory
+    {
+        return $this->state([
+            'status' => Reservation::STATUS_CANCELLED,
+        ]);
     }
 }

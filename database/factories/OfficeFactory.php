@@ -11,6 +11,8 @@ use App\Models\Office;
  */
 class OfficeFactory extends Factory
 {
+
+    protected $model = Office::class;
     /**
      * Define the model's default state.
      *
