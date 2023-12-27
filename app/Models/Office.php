@@ -19,7 +19,7 @@ class Office extends Model
 
     const APPROVAL_PENDING = 1;
     const APPROVAL_APPROVED = 2;
-    const APPROVAL_REJECTED = 3;
+
 
     public $casts = [
         'lat' => 'decimal:8',
@@ -37,9 +37,7 @@ class Office extends Model
 
     public function reservations(): HasMany
     {
-
         return $this->hasMany(Reservation::class);
-
     }
 
     public function images(): MorphMany
@@ -47,9 +45,14 @@ class Office extends Model
         return $this->morphMany(Image::class, 'resource');
     }
 
+    public function featuredImage(): BelongsTo
+    {
+        return $this->belongsTo(Image::class, 'featured_image_id');
+    }
+
     public function tags(): BelongsToMany
     {
-        return $this->belongsToMany(Tag::class,'office_tags');
+        return $this->belongsToMany(Tag::class, 'office_tags');
     }
 
     public function scopeNearestTo(Builder $builder, $lat, $lng)
