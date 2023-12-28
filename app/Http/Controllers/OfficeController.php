@@ -79,7 +79,7 @@ class OfficeController extends Controller
         $attributes['user_id'] = auth()->id();
 
         $office = DB::transaction(function () use ($office, $attributes){
-            $offices->fill(
+            $office->fill(
             Arr::except($attributes,['tags'])
         )->save();
         $office->tags()->attach($attributes['tags']);
@@ -98,11 +98,18 @@ class OfficeController extends Controller
             Response::HTTP_FORBIDDEN
         );
 
+        $this->authorize('update', $office);
+
         $attributes = (new OfficeValidator())->validate($office, request()->all());
-        // dd($attributes);
-        // dd($office);
+
+        $office->fill(Arr::except($attributes, ['tags']));
+
+        if ($requiresReview = $office->isDirty(['lat', 'lng', 'price_per_day'])) {
+            $office->fill(['approval_status' => Office::APPROVAL_PENDING]);
+        }
+
         DB::transaction(function () use ($office, $attributes) {
-            dd($attributes);
+            // dd($attributes);
             $office->save();
 
             if (isset($attributes['tags'])) {
@@ -110,8 +117,34 @@ class OfficeController extends Controller
             }
         });
 
+        // if ($requiresReview) {
+        //     Notification::send(User::where('is_admin', true)->get(), new OfficePendingApproval($office));
+        // }
+
         return OfficeResource::make(
             $office->load(['images','tags','user'])
         );
+    }
+
+    public function delete(Office $office)
+    {
+        abort_unless(auth()->user()->tokenCan('office.delete'),
+            Response::HTTP_FORBIDDEN
+        );
+
+        $this->authorize('delete', $office);
+
+        throw_if(
+            $office->reservations()->where('status', Reservation::STATUS_ACTIVE)->exists(),
+            ValidationException::withMessages(['office' => 'Cannot delete this office!'])
+        );
+
+        $office->images()->each(function ($image) {
+            Storage::delete($image->path);
+
+            $image->delete();
+        });
+
+        $office->delete();
     }
 }
