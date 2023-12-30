@@ -403,25 +403,72 @@ class OfficeControllerTest extends TestCase
         // Notification::assertSentTo($admin, OfficePendingApproval::class);
     }
 
+    /**
+     * @test
+     */
+    public function UpdatedTheFeaturedImageOfAnOffice()
+    {
+        $user = User::factory()->create();
+        $office = Office::factory()->for($user)->create();
+
+        $image = $office->images()->create([
+            'path' => 'image.jpg'
+        ]);
+
+        $this->actingAs($user);
+
+        $response = $this->putJson('/api/offices/'.$office->id, [
+            'featured_image_id' => $image->id,
+        ]);
+
+        $response->assertOk()
+            ->assertJsonPath('data.featured_image_id', $image->id);
+    }
+
+    /**
+     * @test
+     */
+    public function DoesntUpdateFeaturedImageThatBelongsToAnotherOffice()
+    {
+        $user = User::factory()->create();
+        $office = Office::factory()->for($user)->create();
+        $office2 = Office::factory()->for($user)->create();
+
+        $image = $office2->images()->create([
+            'path' => 'image.jpg'
+        ]);
+
+        $this->actingAs($user);
+
+        $response = $this->putJson('/api/offices/'.$office->id, [
+            'featured_image_id' => $image->id,
+        ]);
+
+        $response->assertUnprocessable()->assertInvalid('featured_image_id');
+    }
+
+
      /**
      * @test
      */
     public function CanDeleteOffices()
     {
-        // Storage::put('/office_image.jpg', 'empty');
+        Storage::put('/office_image.jpg', 'empty');
 
         $user = User::factory()->create();
         $office = Office::factory()->for($user)->create();
 
-        // $image = $office->images()->create([
-        //     'path' => 'office_image.jpg'
-        // ]);
+        $image = $office->images()->create([
+            'path' => 'office_image.jpg'
+        ]);
 
         $this->actingAs($user);
 
         $response = $this->deleteJson('/api/offices/'.$office->id);
 
-
+        // dd(
+        // $response
+        // );
         $response->assertOk();
 
         $this->assertSoftDeleted($office);

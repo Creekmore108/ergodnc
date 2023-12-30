@@ -34,8 +34,109 @@ class OfficeImageControllerTest extends TestCase
         $response->assertCreated();
 
         // @TODO This test is failing and needs investigation
-//        Storage::assertExists(
-//            $response->json('data.path')
-//        );
+       Storage::assertExists(
+           $response->json('data.path')
+       );
+    }
+
+    /**
+     * @test
+     */
+    public function DeletesAnImage()
+    {
+        Storage::put('/office_image.jpg', 'empty');
+
+        $user = User::factory()->create();
+        $office = Office::factory()->for($user)->create();
+
+        $office->images()->create([
+            'path' => 'image.jpg'
+        ]);
+
+        $image = $office->images()->create([
+            'path' => 'office_image.jpg'
+        ]);
+
+        // dd(
+        //     $image
+        // );
+
+        $this->actingAs($user);
+
+        $response = $this->deleteJson("/api/offices/{$office->id}/images/{$image->id}");
+
+        $response->assertOk();
+
+        $this->assertModelMissing($image);
+
+        Storage::assertMissing('office_image.jpg');
+    }
+
+    /**
+     * @test
+     */
+    public function DoesntDeleteImageThatBelongsToAnotherResource()
+    {
+        $user = User::factory()->create();
+        $office = Office::factory()->for($user)->create();
+        $office2 = Office::factory()->for($user)->create();
+
+        $image = $office2->images()->create([
+            'path' => 'office_image.jpg'
+        ]);
+
+        $this->actingAs($user);
+
+        $response = $this->deleteJson("/api/offices/{$office->id}/images/{$image->id}");
+
+        $response->assertNotFound();
+    }
+
+    /**
+     * @test
+     */
+    public function DoesntDeleteTheOnlyImage()
+    {
+        $user = User::factory()->create();
+        $office = Office::factory()->for($user)->create();
+
+        $image = $office->images()->create([
+            'path' => 'office_image.jpg'
+        ]);
+
+        $this->actingAs($user);
+
+        $response = $this->deleteJson("/api/offices/{$office->id}/images/{$image->id}");
+
+        $response->assertUnprocessable();
+
+        $response->assertJsonValidationErrors(['image' => 'Cannot delete the only image.']);
+    }
+
+    /**
+     * @test
+     */
+    public function DoesntDeleteTheFeaturedImage()
+    {
+        $user = User::factory()->create();
+        $office = Office::factory()->for($user)->create();
+
+        $office->images()->create([
+            'path' => 'image.jpg'
+        ]);
+
+        $image = $office->images()->create([
+            'path' => 'office_image.jpg'
+        ]);
+
+        $office->update(['featured_image_id' => $image->id]);
+
+        $this->actingAs($user);
+
+        $response = $this->deleteJson("/api/offices/{$office->id}/images/{$image->id}");
+
+        $response->assertUnprocessable();
+
+        $response->assertJsonValidationErrors(['image' => 'Cannot delete the featured image.']);
     }
 }

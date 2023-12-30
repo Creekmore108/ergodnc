@@ -25,34 +25,34 @@ class OfficeController extends Controller
     public function index(): JsonResource
     {
         $offices = Office::query()
-        ->when(request('user_id') && auth()->user() && request('user_id') == auth()->id(),
-            fn($builder) => $builder,
-            fn($builder) => $builder->where('approval_status', Office::APPROVAL_APPROVED)->where('hidden', false)
-        )
-        ->when(request('user_id'), fn($builder) => $builder->whereUserId(request('user_id')))
-        ->when(request('visitor_id'),
-            fn($builder) => $builder->whereRelation('reservations', 'user_id', '=', request('visitor_id'))
-        )
-        ->when(
-            request('lat') && request('lng'),
-            fn($builder) => $builder->nearestTo(request('lat'), request('lng')),
-            fn($builder) => $builder->orderBy('id', 'ASC')
-        )
-        ->when(request('tags'),
-            fn($builder) => $builder->whereHas(
-                'tags',
-                fn ($builder) => $builder->whereIn('id', request('tags')),
-                '=',
-                count(request('tags'))
+            ->when(request('user_id') && auth()->user() && request('user_id') == auth()->id(),
+                fn($builder) => $builder,
+                fn($builder) => $builder->where('approval_status', Office::APPROVAL_APPROVED)->where('hidden', false)
             )
-        )
-        ->with(['images', 'tags', 'user'])
-        ->withCount(['reservations' => fn($builder) => $builder->whereStatus(Reservation::STATUS_ACTIVE)])
-        ->paginate(20);
+            ->when(request('user_id'), fn($builder) => $builder->whereUserId(request('user_id')))
+            ->when(request('visitor_id'),
+                fn($builder) => $builder->whereRelation('reservations', 'user_id', '=', request('visitor_id'))
+            )
+            ->when(
+                request('lat') && request('lng'),
+                fn($builder) => $builder->nearestTo(request('lat'), request('lng')),
+                fn($builder) => $builder->orderBy('id', 'ASC')
+            )
+            ->when(request('tags'),
+                fn($builder) => $builder->whereHas(
+                    'tags',
+                    fn ($builder) => $builder->whereIn('id', request('tags')),
+                    '=',
+                    count(request('tags'))
+                )
+            )
+            ->with(['images', 'tags', 'user'])
+            ->withCount(['reservations' => fn($builder) => $builder->whereStatus(Reservation::STATUS_ACTIVE)])
+            ->paginate(20);
 
-    return OfficeResource::collection(
-        $offices
-    );
+        return OfficeResource::collection(
+            $offices
+        );
     }
 
 
