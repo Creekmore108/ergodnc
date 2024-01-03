@@ -237,55 +237,29 @@ class OfficeControllerTest extends TestCase
     {
         Notification::fake();
 
-         $admin = User::factory()->create(['is_admin' => true]);
+        $admin = User::factory()->create(['is_admin' => true]);
 
         $user = User::factory()->create();
         $tags = Tag::factory(2)->create();
 
-        $this->actingAs($user);
+        Sanctum::actingAs($user, ['*']);
 
         $response = $this->postJson('/api/offices', Office::factory()->raw([
-            'title' => 'My New Offcie',
             'tags' => $tags->pluck('id')->toArray()
         ]));
 
         // dd(
         //     $response->json()
         // );
-
-        // $response = $this->postJson('/api/offices', [
-        //     'title' => 'Office in Colorado',
-        //     'description' => 'Description HERE',
-        //     'lat' => '39.888888888',
-        //     'lng' => '-8.838483484',
-        //     'address_line1' => '123 Main st.',
-        //     'price_per_day' => 10_000,
-        //     'monthly_discount' => 5,
-        //     'tags' => [
-        //         $tag->id, $tag2->id
-        //     ]
-        // ]);
-
         $response->assertCreated()
-            ->assertJsonPath('data.title', 'My New Offcie');
-            // ->assertJsonPath('data.APPROVAL_STATUS', Office::APPROVAL_PENDING)
-            // ->assertJsonPath('data.reservations_count', 0)
-            // ->assertJsonPath('data.id', $user->id)
-            // ->assertJsonCount(2, 'data.tags');
+            ->assertJsonPath('data.APPROVAL_STATUS', Office::APPROVAL_PENDING)
+            ->assertJsonPath('data.reservations_count', 0)
+            ->assertJsonPath('data.user.id', $user->id)
+            ->assertJsonCount(2, 'data.tags');
 
-        // dd($response->json());
-
-        // $response->dump();
-
-        // Sanctum::actingAs($user, ['*']);
-
-        // $response = $this->postJson('/offices', Office::factory()->raw([
-        //     'tags' => $tags->pluck('id')->toArray()
-        // ]));
-
-        // $this->assertDatabaseHas('offices', [
-        //     'id' => $response->json('data.id')
-        // ]);
+        $this->assertDatabaseHas('offices', [
+            'id' => $response->json('data.id')
+        ]);
 
         // Notification::assertSentTo($admin, OfficePendingApproval::class);
     }
@@ -331,6 +305,7 @@ class OfficeControllerTest extends TestCase
 
         $office->tags()->attach($tags);
 
+        // Sanctum::actingAs($user, ['*']);
         $this->actingAs($user);
 
         $response = $this->postJson('/api/offices', Office::factory()->raw([
