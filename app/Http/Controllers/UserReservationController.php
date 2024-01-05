@@ -55,6 +55,10 @@ class UserReservationController extends Controller
             Response::HTTP_FORBIDDEN
         );
 
+        // dd(
+        //     request()->all()
+        // );
+
         $data = validator(request()->all(), [
             'office_id' => ['required', 'integer'],
             'start_date' => ['required', 'date:Y-m-d', 'after:today'],
@@ -110,8 +114,8 @@ class UserReservationController extends Controller
         });
 
 
-        // Notification::send(auth()->user(), new NewUserReservation($reservation));
-        // Notification::send($office->user, new NewHostReservation($reservation));
+        Notification::send(auth()->user(), new NewUserReservation($reservation));
+        Notification::send($office->user, new NewHostReservation($reservation));
 
         return ReservationResource::make(
             $reservation->load('office')

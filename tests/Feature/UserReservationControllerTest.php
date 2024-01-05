@@ -16,7 +16,7 @@ use Tests\TestCase;
 
 class UserReservationControllerTest extends TestCase
 {
-    use LazilyRefreshDatabase;
+    // use LazilyRefreshDatabase;
 
     /**
      * @test
@@ -105,10 +105,10 @@ class UserReservationControllerTest extends TestCase
                 'to_date' => $toDate,
             ]));
 
-        dd(
-            DB::getQueryLog()
-            // $response->json()
-        );
+        // dd(
+        //     DB::getQueryLog()
+        //     // $response->json()
+        // );
 
         $response
             ->assertJsonCount(4, 'data');
@@ -284,6 +284,90 @@ class UserReservationControllerTest extends TestCase
 
         $response->assertUnprocessable()
             ->assertJsonValidationErrors(['office_id' => 'You cannot make a reservation during this time']);
+    }
+
+    /**
+     * @test
+     */
+    public function CannotMakeReservationOnOfficeThatIsPendingOrHidden()
+    {
+        $user = User::factory()->create();
+
+        $office = Office::factory()->create([
+            'approval_status' => Office::APPROVAL_PENDING
+        ]);
+
+        $office2 = Office::factory()->create([
+            'hidden' => true
+        ]);
+
+        $this->actingAs($user);
+
+        $response = $this->postJson('/api/reservations', [
+            'office_id' => $office->id,
+            'start_date' => now()->addDay(),
+            'end_date' => now()->addDays(41),
+        ]);
+
+        $response2 = $this->postJson('/api/reservations', [
+            'office_id' => $office2->id,
+            'start_date' => now()->addDay(),
+            'end_date' => now()->addDays(41),
+        ]);
+
+        $response->assertUnprocessable()
+            ->assertJsonValidationErrors(['office_id' => 'You cannot make a reservation on a hidden office']);
+
+        $response2->assertUnprocessable()
+            ->assertJsonValidationErrors(['office_id' => 'You cannot make a reservation on a hidden office']);
+    }
+
+   /**
+     * @test
+     */
+    public function CannotMakeReservationOnSameDay()
+    {
+        $user = User::factory()->create();
+
+        $office = Office::factory()->create();
+
+        $this->actingAs($user);
+
+        $response = $this->postJson('/api/reservations', [
+            'office_id' => $office->id,
+            'start_date' => now()->toDateString(),
+            'end_date' => now()->addDays(3)->toDateString(),
+        ]);
+
+
+
+        $response->assertUnprocessable()
+            ->assertJsonValidationErrors(['start_date' => 'The start date field must be a date after today.']);
+    }
+
+    /**
+     * @test
+     */
+    public function SendsNotificationsOnNewReservations()
+    {
+        Notification::fake();
+
+        $user = User::factory()->create();
+
+        $office = Office::factory()->create();
+
+        $this->actingAs($user);
+
+        $response = $this->postJson('/api/reservations', [
+            'office_id' => $office->id,
+            'start_date' => now()->addDay(),
+            'end_date' => now()->addDays(2),
+        ]);
+
+        Notification::assertSentTo($user, NewUserReservation::class);
+        Notification::assertSentTo($office->user, NewHostReservation::class);
+
+        $response->assertCreated();
     }
 
 }

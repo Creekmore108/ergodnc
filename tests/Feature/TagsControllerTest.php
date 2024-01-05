@@ -15,9 +15,9 @@ class TagsControllerTest extends TestCase
     {
         $response = $this->get('/api/tags');
 
-        dd(
-            $response->json()
-        );
+        // dd(
+        //     $response->json()
+        // );
 
         $response->assertStatus(200);
     }
