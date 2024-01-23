@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class Image extends Model
 {
-    use HasFactory;
+    use HasFactory, Prunable;
 
     protected $guarded = [];
 
