@@ -6,8 +6,10 @@
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
 </p>
-A Core application for office reservations (similar to AirBNB).
-All functionality is written for API accesss only usin Sanctum on the backend for authentication.
+A Core application for office reservations (similar to AirBNB).<br>
+All functionality is written for API accesss only utilizing Sanctum on the backend for authentication.
+https://laravel.com/docs/10.x/sanctum
+
 
 ## License
 
